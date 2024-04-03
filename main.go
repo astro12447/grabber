@@ -139,7 +139,7 @@ func main() {
 		for i := 0; i < len(list); i++ {
 			list[i].print()
 		}
-	} else {
+	} else if sort != "None" && root != "None" {
 		list, err := getFilesFromDirectory(root)
 		if err != nil {
 			panic(err)
@@ -148,6 +148,8 @@ func main() {
 		for i := 0; i < len(list); i++ {
 			list[i].print()
 		}
+	} else {
+		fmt.Println("->Introduce correct Command line:(--root=/pathfile  --sort=Desc) or --root=/pathfile")
 	}
 
 }
