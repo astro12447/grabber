@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 )
 
@@ -16,7 +17,7 @@ type Files struct {
 }
 
 func (ob *Files) print() {
-	fmt.Println("FileName:", ob.name, "FileExt:", ob.extension, "FileSize/byte", ob.size)
+	fmt.Println("Name:", ob.name, "Type:", ob.extension, "FileSize/byte", ob.size)
 }
 func getFilePathFromCommand(temp string, sort string) (string, string, error) {
 	var sourcepath *string
@@ -66,6 +67,20 @@ func getFileLocation(root string, filename string) (string, error) {
 	}
 	return root + "/" + filename, nil
 }
+func getAllFromDir(path string) error {
+	err := filepath.Walk(path, func(p string, inf os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		fmt.Printf("dir: %v: name: %s\n", inf.IsDir(), p)
+		return nil
+	})
+	if err != nil {
+		fmt.Println(err)
+	}
+	return nil
+}
 func getFileExtension(root string, filename string) (string, error) {
 	f, err := getFileLocation(root, filename)
 	if err != nil {
@@ -98,7 +113,8 @@ func getFilesFromDirectory(pathName string) ([]Files, error) {
 			panic(err)
 		}
 		Ext, err := getFileExtension(pathName, item.Name())
-		element := Files{name: f.Name(), extension: Ext, size: f.Size()}
+		name := pathName + "/" + f.Name()
+		element := Files{name: name, extension: Ext, size: f.Size()}
 		s = append(s, element)
 	}
 	return s, nil
@@ -124,6 +140,7 @@ func sortDesc(arr []Files) error {
 
 func main() {
 	//root := "/Users/ismaelnvo/Desktop/sort/pathfiles"
+	getAllFromDir("/Users/ismaelnvo/Desktop/sort/temp")
 	rootflag := "root"
 	sortflag := "sort"
 	root, sort, err := getFilePathFromCommand(rootflag, sortflag)
