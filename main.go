@@ -16,13 +16,15 @@ type Files struct {
 	size      int64
 }
 
+var s []Files
+
 func (ob *Files) print() {
 	fmt.Println("Name:", ob.name, "Type:", ob.extension, "FileSize/byte", ob.size)
 }
-func getFilePathFromCommand(temp string, sort string) (string, string, error) {
+func getFilePathFromCommand(root string, sort string) (string, string, error) {
 	var sourcepath *string
 	var sortflag *string
-	sourcepath = flag.String(temp, "None", "")
+	sourcepath = flag.String(root, "None", "")
 	sortflag = flag.String(sort, "None", "")
 	flag.Parse()
 	return *sourcepath, *sortflag, nil
@@ -30,7 +32,7 @@ func getFilePathFromCommand(temp string, sort string) (string, string, error) {
 func rootExist(root string) (bool, error) {
 	_, err := os.Stat(root)
 	if os.IsNotExist(err) {
-		fmt.Println("Root does not exist...!")
+		fmt.Println("Root не существует...!")
 	}
 	return true, nil
 }
@@ -44,7 +46,6 @@ func getRoot(root string) (string, error) {
 	}
 	return *rootflag, nil
 }
-
 func (ob *Files) getSize() int64 {
 	return ob.size
 }
@@ -63,23 +64,39 @@ func getFilesRecurvise(path string) (bool, error) {
 }
 func getFileLocation(root string, filename string) (string, error) {
 	if root == "" {
-		return "", errors.New("Root is Empty")
+		return "", errors.New("Root  пуст!")
 	}
 	return root + "/" + filename, nil
 }
-func getAllFromDir(path string) error {
+func getAllFromDir(path string) ([]Files, error) {
 	err := filepath.Walk(path, func(p string, inf os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Println(err)
 			return err
 		}
-		fmt.Printf("dir: %v: name: %s\n", inf.IsDir(), p)
+		size, err := getsize(p)
+		if err != nil {
+			fmt.Println(err)
+		}
+		Ext, err := getFileExtension2(p)
+		if err != nil {
+			fmt.Println(err)
+		}
+		element := Files{name: p, extension: Ext, size: size}
+		s = append(s, element)
 		return nil
 	})
 	if err != nil {
 		fmt.Println(err)
 	}
-	return nil
+	return s, nil
+}
+func getsize(filename string) (int64, error) {
+	f, err := os.Stat(filename)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return f.Size(), nil
 }
 func getFileExtension(root string, filename string) (string, error) {
 	f, err := getFileLocation(root, filename)
@@ -91,9 +108,19 @@ func getFileExtension(root string, filename string) (string, error) {
 		fmt.Println(err)
 	}
 	if st.IsDir() {
-		return "Directory", nil
+		return "Каталог", nil
 	}
-	return "file", nil
+	return "файл", nil
+}
+func getFileExtension2(filename string) (string, error) {
+	f, err := os.Stat(filename)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if f.IsDir() {
+		return "Каталог", nil
+	}
+	return "файл", nil
 }
 func getFilesFromDirectory(pathName string) ([]Files, error) {
 	fi, err := os.Open(pathName)
@@ -103,9 +130,8 @@ func getFilesFromDirectory(pathName string) ([]Files, error) {
 	defer fi.Close()
 	files, err := os.ReadDir(pathName)
 	if err != nil {
-		fmt.Print("Can't Read from the Directory!", err)
+		fmt.Print("Невозможно прочитать из каталога!", err)
 	}
-	var s []Files
 	for _, item := range files {
 		p, err := getFileLocation(pathName, item.Name())
 		f, err := os.Stat(p)
@@ -119,35 +145,33 @@ func getFilesFromDirectory(pathName string) ([]Files, error) {
 	}
 	return s, nil
 }
-func sortAsc(arr []Files) error {
+func sortAsc(arr []Files) {
 	if len(arr) < 0 {
-		fmt.Println("Array is empty!")
-	}
-	sort.Slice(arr, func(i, j int) bool {
-		return arr[i].size > arr[j].size
-	})
-	return nil
-}
-func sortDesc(arr []Files) error {
-	if len(arr) < 0 {
-		fmt.Println("Array is empty!")
+		fmt.Println("Массив пуст!")
 	}
 	sort.Slice(arr, func(i, j int) bool {
 		return arr[i].size < arr[j].size
 	})
-	return nil
+}
+func sortDesc(arr []Files) {
+	if len(arr) < 0 {
+		fmt.Println("Массив пуст!")
+	}
+	sort.Slice(arr, func(i, j int) bool {
+		return arr[i].size > arr[j].size
+	})
 }
 
 func main() {
 	//root := "/Users/ismaelnvo/Desktop/sort/pathfiles"
-	getAllFromDir("/Users/ismaelnvo/Desktop/sort/temp")
+	//getAllFromDir("/Users/ismaelnvo/Desktop/sort/temp")
 	rootflag := "root"
 	sortflag := "sort"
 	root, sort, err := getFilePathFromCommand(rootflag, sortflag)
 	if err != nil {
 		fmt.Println(err)
 	}
-	if sort == "None" {
+	if root != "None" && sort == "None" {
 		list, err := getFilesFromDirectory(root)
 		if err != nil {
 			panic(err)
@@ -156,7 +180,7 @@ func main() {
 		for i := 0; i < len(list); i++ {
 			list[i].print()
 		}
-	} else if sort != "None" && root != "None" {
+	} else if sort == "Desc" && root != "None" {
 		list, err := getFilesFromDirectory(root)
 		if err != nil {
 			panic(err)
