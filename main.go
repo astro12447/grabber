@@ -153,6 +153,8 @@ func sortAsc(arr []Files) {
 		return arr[i].size < arr[j].size
 	})
 }
+
+// 767899
 func sortDesc(arr []Files) {
 	if len(arr) < 0 {
 		fmt.Println("Массив пуст!")
@@ -163,8 +165,6 @@ func sortDesc(arr []Files) {
 }
 
 func main() {
-	//root := "/Users/ismaelnvo/Desktop/sort/pathfiles"
-	//getAllFromDir("/Users/ismaelnvo/Desktop/sort/temp")
 	rootflag := "root"
 	sortflag := "sort"
 	root, sort, err := getFilePathFromCommand(rootflag, sortflag)
