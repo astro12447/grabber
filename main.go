@@ -190,7 +190,7 @@ func main() {
 			list[i].print()
 		}
 	} else {
-		fmt.Println("->Introduce correct Command line:(--root=/pathfile  --sort=Desc) or --root=/pathfile")
+		fmt.Println("->Введите правильную командную строку:(--root=/pathfile  --sort=Desc) or --root=/pathfile")
 	}
 
 }
