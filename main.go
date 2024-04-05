@@ -188,7 +188,7 @@ func sortDesc(arr []Files) {
 	})
 }
 
-// Чтение файла из катологе(Root)
+// Чтение файлов из катологе(Root)
 func readDir(root string) ([]fs.FileInfo, error) {
 	arrayfiles, err := ioutil.ReadDir(root)
 	if err != nil {
@@ -196,7 +196,6 @@ func readDir(root string) ([]fs.FileInfo, error) {
 	}
 	return arrayfiles, nil
 }
-
 func main() {
 	rootflag := "root"
 	sortflag := "sort"
