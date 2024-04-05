@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -158,7 +159,6 @@ func getFilesFromDirectory(pathName string) ([]Files, error) {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(f.Name(), f.Size())
 		Ext, err := getFileExtension(pathName, item.Name())
 		name := pathName + "/" + f.Name()
 		element := Files{name: name, extension: Ext, size: f.Size()}
@@ -186,23 +186,6 @@ func sortDesc(arr []Files) {
 		return arr[i].size > arr[j].size
 	})
 }
-
-// Получение списки файлы из котолога(pathName)
-func listfiles(pathName string) ([]string, error) {
-	var pathUrl []string
-	err := filepath.Walk(pathName, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		pathUrl = append(pathUrl, filepath.Dir(path))
-		return nil
-	})
-	if err != nil {
-		log.Println(err)
-	}
-	return pathUrl, nil
-}
-
 func main() {
 	rootflag := "root"
 	sortflag := "sort"
@@ -210,40 +193,61 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	if root != "None" && sort == "None" {
-		list, err := getAllFromDir(root)
-		if err != nil {
-			panic(err)
-		}
-		sortAsc(list)
-		for i := 0; i < len(list); i++ {
-			list[i].print()
-		}
-	} else if sort == "Desc" && root != "None" {
-		list, err := getAllFromDir(root)
-		if err != nil {
-			panic(err)
-		}
-		sortDesc(list)
-		for i := 0; i < len(list); i++ {
-			list[i].print()
-		}
-	}
-	var wg sync.WaitGroup
-	entries, err := listfiles(root)
+	structarray, err := ioutil.ReadDir(root)
 	if err != nil {
 		fmt.Println(err)
 	}
-	for i := range entries {
-		count := i
-		go func(path string) {
+	structure := []Files{}
+	var wg sync.WaitGroup
+	for _, item := range structarray {
+		wg.Add(1)
+		go func(item os.FileInfo, path string) {
 			defer wg.Done()
-			_, err := getFilesFromDirectory(entries[count])
-			wg.Add(1)
 			if err != nil {
 				fmt.Println(err)
 			}
-		}(entries[i])
-		wg.Wait()
+
+			if item.IsDir() {
+				var size int64 = 0
+				err := filepath.Walk(item.Name(), func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					size += info.Size()
+					return nil
+				})
+				structure = append(structure, Files{
+					name:      item.Name(),
+					extension: "dir",
+					size:      size,
+				})
+				if err != nil {
+					log.Println(err)
+				}
+			} else {
+				structure = append(structure, Files{
+					name:      item.Name(),
+					extension: "file",
+					size:      item.Size(),
+				})
+			}
+		}(item, "")
 	}
+	wg.Wait()
+
+	if root != "None" && sort == "None" {
+		sortAsc(structure)
+		for i := 0; i < len(structure); i++ {
+			structure[i].print()
+		}
+	} else if sort == "Desc" && root != "None" {
+		if err != nil {
+			panic(err)
+		}
+		sortDesc(structure)
+		for i := 0; i < len(structure); i++ {
+			structure[i].print()
+		}
+	}
+
 }
