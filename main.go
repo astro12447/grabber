@@ -201,7 +201,7 @@ func main() {
 	var wg sync.WaitGroup
 	for _, item := range structarray {
 		wg.Add(1)
-		go func(item os.FileInfo, path string) {
+		go func(item os.FileInfo) {
 			defer wg.Done()
 			if err != nil {
 				fmt.Println(err)
@@ -218,7 +218,7 @@ func main() {
 				})
 				structure = append(structure, Files{
 					name:      item.Name(),
-					extension: "dir",
+					extension: "Каталог",
 					size:      size,
 				})
 				if err != nil {
@@ -227,11 +227,11 @@ func main() {
 			} else {
 				structure = append(structure, Files{
 					name:      item.Name(),
-					extension: "file",
+					extension: "Файл",
 					size:      item.Size(),
 				})
 			}
-		}(item, "")
+		}(item)
 	}
 	wg.Wait()
 
