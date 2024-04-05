@@ -4,6 +4,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"io/ioutil"
 	"log"
 	"os"
@@ -186,6 +187,14 @@ func sortDesc(arr []Files) {
 		return arr[i].size > arr[j].size
 	})
 }
+func readDir(root string) ([]fs.FileInfo, error) {
+	arrayfiles, err := ioutil.ReadDir(root)
+	if err != nil {
+		panic(err)
+	}
+	return arrayfiles, nil
+}
+
 func main() {
 	rootflag := "root"
 	sortflag := "sort"
@@ -193,13 +202,14 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	structarray, err := ioutil.ReadDir(root)
+	arrayfiles, err := readDir(root)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
-	structure := []Files{}
+	filesArr := []Files{}
 	var wg sync.WaitGroup
-	for _, item := range structarray {
+	for _, item := range arrayfiles {
 		wg.Add(1)
 		go func(item os.FileInfo) {
 			defer wg.Done()
@@ -216,7 +226,7 @@ func main() {
 					size += info.Size()
 					return nil
 				})
-				structure = append(structure, Files{
+				filesArr = append(filesArr, Files{
 					name:      item.Name(),
 					extension: "Каталог",
 					size:      size,
@@ -225,7 +235,7 @@ func main() {
 					log.Println(err)
 				}
 			} else {
-				structure = append(structure, Files{
+				filesArr = append(filesArr, Files{
 					name:      item.Name(),
 					extension: "Файл",
 					size:      item.Size(),
@@ -236,17 +246,17 @@ func main() {
 	wg.Wait()
 
 	if root != "None" && sort == "None" {
-		sortAsc(structure)
-		for i := 0; i < len(structure); i++ {
-			structure[i].print()
+		sortAsc(filesArr)
+		for i := 0; i < len(filesArr); i++ {
+			filesArr[i].print()
 		}
 	} else if sort == "Desc" && root != "None" {
 		if err != nil {
 			panic(err)
 		}
-		sortDesc(structure)
-		for i := 0; i < len(structure); i++ {
-			structure[i].print()
+		sortDesc(filesArr)
+		for i := 0; i < len(filesArr); i++ {
+			filesArr[i].print()
 		}
 	}
 
